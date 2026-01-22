@@ -23,11 +23,11 @@ This project implements a production-inspired data pipeline for processing clini
 
 ### Data Layers
 
-| Layer | Purpose | Storage |
-|-------|---------|---------|
-| **Raw** | Preserve original API responses (append-only) | `raw_studies` table |
-| **Staging** | Cleaned and normalized data | *Coming soon* |
-| **Analytics** | Aggregated metrics and dimensional models | *Coming soon* |
+| Layer | Purpose | Implementation |
+|-------|---------|----------------|
+| **Raw (Bronze)** | Preserve original API responses | `raw_studies` table |
+| **Staging (Silver)** | Normalized, typed data | `stg_studies`, `stg_conditions`, `stg_interventions`, `stg_locations` |
+| **Analytics (Gold)** | Aggregated metrics | SQL queries for trials, conditions, interventions, geography |
 
 ### Data Source
 
@@ -47,20 +47,19 @@ This project implements a production-inspired data pipeline for processing clini
 
 ```
 ├── src/clinical_trial_pipeline/
-│   ├── extract/        # API clients
-│   ├── load/           # Data loading logic
-│   ├── transform/      # Data transformations
-│   ├── storage/        # Database connections & repositories
-│   ├── common/         # Logging, config, utilities
-│   └── domain/         # Domain entities
+│   ├── cli.py             # CLI entrypoint
+│   ├── extract/           # API clients
+│   ├── load/              # Ingestion service
+│   ├── storage/           # Database & repositories
+│   └── common/            # Logging, utilities
 ├── sql/
-│   ├── raw/            # Bronze layer DDL
-│   ├── staging/        # Silver layer transformations
-│   └── analytics/      # Analytical queries
+│   ├── raw/               # Bronze layer DDL
+│   ├── staging/           # Silver layer views
+│   └── analytics/         # Gold layer queries
 └── tests/
 ```
 
-## Setup
+## Quick Start
 
 ### Prerequisites
 
@@ -76,36 +75,57 @@ uv sync
 uv pip install -e .
 ```
 
-### Running Tests
+### Ingest Data
+
+```bash
+# Ingest 500 studies from the API
+uv run python -m clinical_trial_pipeline.cli ingest --max-studies 500
+
+# Custom database path
+uv run python -m clinical_trial_pipeline.cli ingest --db-path data/trials.duckdb --max-studies 1000
+```
+
+### Run Tests
 
 ```bash
 uv run pytest tests/ -v
 ```
 
-## Usage
+## Data Models
 
-### Fetch studies from API
+### Staging Layer (Silver)
 
-```python
-from clinical_trial_pipeline.extract.clinicaltrials_client import ClinicalTrialsClient
+| Model | Description |
+|-------|-------------|
+| `stg_studies` | Core study attributes (type, phase, status, enrollment, dates, sponsor) |
+| `stg_conditions` | Conditions being studied (1:N with studies) |
+| `stg_interventions` | Interventions used (1:N with studies) |
+| `stg_locations` | Study locations with coordinates (1:N with studies) |
 
-with ClinicalTrialsClient() as client:
-    data = client.fetch_studies(page_size=100)
-    studies = data["studies"]
-    next_token = data.get("nextPageToken")
-```
+### Analytics Queries (Gold)
 
-### Store raw data
+| Query | Question Answered |
+|-------|-------------------|
+| `trials_by_phase.sql` | How many trials by study type and phase? |
+| `top_conditions.sql` | What are the most common conditions? |
+| `interventions_completion_rate.sql` | Which interventions have highest completion rates? |
+| `trials_by_country.sql` | Geographic distribution of trials? |
+| `study_duration.sql` | Average study duration by type and phase? |
+
+### Example: Run Analytics
 
 ```python
 from clinical_trial_pipeline.storage.database import Database
-from clinical_trial_pipeline.storage.raw_repository import RawStudyRepository
+from pathlib import Path
 
 with Database("data/clinical_trials.duckdb") as db:
-    repo = RawStudyRepository(db)
-    repo.initialize()
+    # Apply staging views
+    for sql_file in sorted(Path("sql/staging").glob("*.sql")):
+        db.connection.execute(sql_file.read_text())
 
-    inserted, skipped = repo.insert_studies_batch(studies)
+    # Run analytics query
+    query = Path("sql/analytics/trials_by_phase.sql").read_text()
+    results = db.connection.execute(query).fetchall()
 ```
 
 ## Design Decisions
@@ -114,7 +134,7 @@ with Database("data/clinical_trials.duckdb") as db:
 
 - Zero setup (embedded, like SQLite)
 - Columnar storage optimized for analytics
-- Native JSON support
+- Native JSON support for parsing raw API responses
 - Easy export to Parquet for downstream tools
 
 ### Why append-only raw layer?
@@ -122,6 +142,12 @@ with Database("data/clinical_trials.duckdb") as db:
 - Preserves data history for auditing
 - Allows reprocessing with different transformation logic
 - Deduplication via content hash prevents redundant storage
+
+### Why SQL views for staging?
+
+- Demonstrates SQL proficiency
+- No data duplication (views read from raw)
+- Schema changes don't require re-ingestion
 
 ### Why `requests` over `httpx`?
 
