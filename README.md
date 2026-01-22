@@ -141,6 +141,13 @@ docker-compose -f docker-compose.airflow.yml up -d
 
 See [airflow/README.md](airflow/README.md) for details.
 
+### Scheduling
+
+By default, the pipeline runs on manual trigger (CLI or Airflow UI) to avoid unnecessary API calls during development and evaluation.
+
+Periodic execution can be enabled via Airflow by configuring the DAG schedule (e.g. `@daily`, `@hourly`, or cron expressions).
+The ingestion process is idempotent, so repeated scheduled runs are safe and do not create duplicate records.
+
 ### Dashboard
 
 ```bash
