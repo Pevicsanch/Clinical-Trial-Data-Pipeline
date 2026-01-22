@@ -105,6 +105,18 @@ docker run --rm -v $(pwd)/data:/app/data clinical-pipeline ingest --max-studies 
 docker-compose up
 ```
 
+### Makefile
+
+```bash
+make install      # Install dependencies
+make test         # Run tests
+make ingest       # Ingest 100 studies
+make ingest-full  # Ingest 1000 studies
+make docker-build # Build Docker image
+make docker-run   # Run ingestion in Docker
+make clean        # Remove generated files
+```
+
 ## Data Models
 
 ### Staging Layer (Silver)
