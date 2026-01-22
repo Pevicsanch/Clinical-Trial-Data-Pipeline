@@ -104,6 +104,8 @@ uv run pytest tests/ -v
 
 ### Docker
 
+The Docker image is intentionally minimal and focused on pipeline execution to reduce build time and cognitive overhead.
+
 ```bash
 # Build and run ingestion (recommended)
 docker-compose up --build
@@ -281,6 +283,13 @@ with Database("data/clinical_trials.duckdb") as db:
 - Some fields contain missing or inconsistent values (handled as nulls)
 - Gold layer uses on-demand queries, not materialized tables
 - Dashboard serves as validation UI, not a production BI tool
+
+## What Was Intentionally Out of Scope
+
+- No incremental ingestion based on `last_updated` (API limitations)
+- No async ingestion (kept simple for readability)
+- No materialized Gold tables (queries only)
+- Limited data quality rules implemented in code (documented instead)
 
 ## Production Considerations
 
