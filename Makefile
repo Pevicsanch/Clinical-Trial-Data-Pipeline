@@ -1,4 +1,4 @@
-.PHONY: install test lint ingest clean docker docker-ingest docker-app app
+.PHONY: install test lint ingest clean docker docker-ingest docker-app app inspect-db inspect-raw
 
 install:
 	uv sync
@@ -33,3 +33,9 @@ docker-app:
 
 app:
 	uv run streamlit run app.py
+
+inspect-db:
+	uv run python -c "import duckdb; [print(t[0]) for t in duckdb.connect('data/clinical_trials.duckdb').execute('SHOW TABLES').fetchall()]"
+
+inspect-raw:
+	uv run python -c "import duckdb; print('raw_studies:', duckdb.connect('data/clinical_trials.duckdb').execute('SELECT COUNT(*) FROM raw_studies').fetchone()[0], 'rows')"

@@ -132,8 +132,27 @@ make app           # Run Streamlit dashboard
 make docker        # Build and run via docker-compose
 make docker-ingest # Run ingestion in Docker
 make docker-app    # Run dashboard in Docker
+make inspect-db    # List database tables
+make inspect-raw   # Show raw_studies row count
 make clean         # Remove generated files
 ```
+
+### Inspecting Data
+
+After ingestion, inspect the database:
+
+```bash
+make inspect-db    # List tables
+make inspect-raw   # Count raw records
+```
+
+For ad-hoc queries:
+
+```bash
+uv run python -c "import duckdb; c=duckdb.connect('data/clinical_trials.duckdb'); print(c.execute('SELECT COUNT(*) FROM stg_studies').fetchone()[0])"
+```
+
+Analytical queries are versioned in `sql/analytics/` and can be executed directly against the database.
 
 ### Orchestration (Optional)
 
