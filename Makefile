@@ -1,4 +1,4 @@
-.PHONY: install test lint ingest clean docker-build docker-run
+.PHONY: install test lint ingest clean docker-build docker-run app
 
 install:
 	uv sync
@@ -27,3 +27,6 @@ docker-build:
 
 docker-run:
 	docker run --rm -v $(PWD)/data:/app/data clinical-pipeline ingest --max-studies 100
+
+app:
+	uv run streamlit run app.py

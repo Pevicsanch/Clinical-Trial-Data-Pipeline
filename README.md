@@ -43,6 +43,7 @@ This project implements a production-inspired data pipeline for processing clini
 | HTTP Client | requests |
 | Testing | pytest |
 | Containerization | Docker |
+| Dashboard | Streamlit |
 
 ## Project Structure
 
@@ -112,10 +113,26 @@ make install      # Install dependencies
 make test         # Run tests
 make ingest       # Ingest 100 studies
 make ingest-full  # Ingest 1000 studies
+make app          # Run Streamlit dashboard
 make docker-build # Build Docker image
 make docker-run   # Run ingestion in Docker
 make clean        # Remove generated files
 ```
+
+### Dashboard
+
+```bash
+# Start Streamlit app (requires data to be ingested first)
+make ingest
+make app
+```
+
+Opens at http://localhost:8501 with:
+- Total studies, conditions, countries metrics
+- Trials by phase chart
+- Top conditions chart
+- Geographic distribution
+- Completion rates by intervention type
 
 ## Data Models
 
