@@ -1,12 +1,13 @@
 """ClinicalTrials.gov API v2 client."""
 
-import logging
 from dataclasses import dataclass
 from typing import Any
 
 import requests
 
-logger = logging.getLogger(__name__)
+from clinical_trial_pipeline.common.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
