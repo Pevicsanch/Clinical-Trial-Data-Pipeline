@@ -5,5 +5,8 @@ description = "ELT data pipeline for clinical trial data from ClinicalTrials.gov
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "httpx>=0.28.1",
+    "requests>=2.32.5",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
