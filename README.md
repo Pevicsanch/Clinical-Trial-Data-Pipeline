@@ -139,7 +139,7 @@ docker-compose -f docker-compose.airflow.yml up -d
 # Access Airflow UI at http://localhost:8080 (admin/admin)
 ```
 
-See [airflow/README.md](airflow/README.md) for details.
+See [orchestration/README.md](orchestration/README.md) for details.
 
 ### Scheduling
 

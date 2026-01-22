@@ -13,7 +13,7 @@ services:
       - _AIRFLOW_WWW_USER_USERNAME=admin
       - _AIRFLOW_WWW_USER_PASSWORD=admin
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
+      - ./orchestration/dags:/opt/airflow/dags
       - ./sql:/app/sql:ro
       - ./src:/app/src:ro
       - ./data:/app/data

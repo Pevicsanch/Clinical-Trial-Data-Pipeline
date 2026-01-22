@@ -3,20 +3,14 @@
 Validates DAG structure and task dependencies without executing Airflow.
 """
 
-import os
 from pathlib import Path
 
 import pytest
-
-# Set minimal Airflow config before importing airflow modules
-os.environ.setdefault("AIRFLOW_HOME", "/tmp/airflow_test")
-os.environ.setdefault("AIRFLOW__CORE__UNIT_TEST_MODE", "True")
-
 from airflow.models import DagBag
 from airflow.operators.bash import BashOperator
 
 
-DAGS_FOLDER = Path(__file__).parent.parent.parent / "airflow" / "dags"
+DAGS_FOLDER = Path(__file__).parent.parent.parent / "orchestration" / "dags"
 DAG_ID = "clinical_trial_pipeline"
 
 EXPECTED_TASKS = [
@@ -35,7 +29,7 @@ def dagbag():
 @pytest.fixture(scope="module")
 def dag(dagbag):
     """Get the clinical trial pipeline DAG."""
-    return dagbag.get_dag(DAG_ID)
+    return dagbag.dags.get(DAG_ID)
 
 
 class TestDAGImport:
