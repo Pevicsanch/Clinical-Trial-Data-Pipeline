@@ -29,9 +29,18 @@ This project implements a production-inspired data pipeline for processing clini
 | **Staging (Silver)** | Normalized, typed data | `stg_studies`, `stg_conditions`, `stg_interventions`, `stg_locations` |
 | **Analytics (Gold)** | Aggregated metrics | SQL queries for trials, conditions, interventions, geography |
 
+Staging models are defined as SQL views and applied at runtime before executing analytics queries.
+
 ### Data Source
 
 - [ClinicalTrials.gov API v2](https://clinicaltrials.gov/api/v2/studies)
+
+## Pipeline Steps
+
+1. Ingest raw studies from the API into DuckDB (`raw_studies`)
+2. Apply staging views (`stg_*`) from `sql/staging/`
+3. Run analytics queries from `sql/analytics/` (Gold)
+4. Optional: explore results with Streamlit (reads Gold queries)
 
 ## Tech Stack
 
@@ -134,6 +143,8 @@ Opens at http://localhost:8501 with:
 - Geographic distribution
 - Completion rates by intervention type
 
+The dashboard is intentionally lightweight and serves as a visual validation of the analytics (Gold) layer, not as a full BI solution.
+
 ## Data Models
 
 ### Staging Layer (Silver)
@@ -154,6 +165,8 @@ Opens at http://localhost:8501 with:
 | `interventions_completion_rate.sql` | Which interventions have highest completion rates? |
 | `trials_by_country.sql` | Geographic distribution of trials? |
 | `study_duration.sql` | Average study duration by type and phase? |
+
+*Completion rate is defined as the percentage of studies with `overall_status = 'COMPLETED'` per intervention type.*
 
 ### Example: Run Analytics
 
@@ -197,6 +210,13 @@ with Database("data/clinical_trials.duckdb") as db:
 - ClinicalTrials.gov blocks `httpx` User-Agent
 - `requests` works out of the box with no configuration
 
+## Limitations
+
+- Live API data may vary between runs (no snapshot guarantees)
+- Some fields contain missing or inconsistent values (handled as nulls)
+- Gold layer uses on-demand queries, not materialized tables
+- Dashboard serves as validation UI, not a production BI tool
+
 ## Production Considerations
 
 ### Scalability
@@ -204,7 +224,7 @@ with Database("data/clinical_trials.duckdb") as db:
 To handle 100x more data volume:
 
 - **Partitioning**: Partition raw tables by ingestion date for faster queries
-- **Incremental ingestion**: Use `lastUpdatePostDate` filter to fetch only new/updated studies
+- **Incremental ingestion**: Use API-side filters based on update timestamps (when available) to fetch only new/updated studies
 - **Parallel processing**: Batch API requests with async/multiprocessing
 - **Storage**: Export to Parquet files partitioned by year/month for analytical workloads
 - **Infrastructure**: Move from embedded DuckDB to MotherDuck or a distributed query engine
