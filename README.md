@@ -131,6 +131,7 @@ make ingest-full   # Ingest 1000 studies
 make app           # Run Streamlit dashboard
 make docker        # Build and run via docker-compose
 make docker-ingest # Run ingestion in Docker
+make docker-app    # Run dashboard in Docker
 make clean         # Remove generated files
 ```
 

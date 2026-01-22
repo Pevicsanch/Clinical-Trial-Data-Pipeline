@@ -1,4 +1,4 @@
-.PHONY: install test lint ingest clean docker docker-ingest app
+.PHONY: install test lint ingest clean docker docker-ingest docker-app app
 
 install:
 	uv sync
@@ -27,6 +27,9 @@ docker:
 
 docker-ingest:
 	docker-compose run --rm pipeline ingest --max-studies 100
+
+docker-app:
+	docker run --rm -p 8501:8501 -v $(PWD)/data:/app/data -v $(PWD)/app.py:/app/app.py --entrypoint uv clinical-pipeline run streamlit run app.py --server.address 0.0.0.0 --server.headless true
 
 app:
 	uv run streamlit run app.py
