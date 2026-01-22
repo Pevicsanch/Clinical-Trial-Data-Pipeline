@@ -16,6 +16,16 @@ SQL_ANALYTICS = Path("sql/analytics")
 # Consistent color
 CHART_COLOR = "#4C78A8"
 
+# Clinical trial phase order (domain knowledge)
+PHASE_ORDER = ["PHASE1", "PHASE2", "PHASE3", "PHASE4", "Unknown"]
+
+
+def normalize_phase(phase: str | None) -> str:
+    """Normalize phase values, treating NA/null as Unknown."""
+    if phase is None or phase == "NA" or phase == "":
+        return "Unknown"
+    return phase
+
 
 @st.cache_resource
 def get_connection():
@@ -69,24 +79,36 @@ def main():
 
     with col_left:
         st.subheader("Trials by Phase")
+        st.caption("Count of studies grouped by reported trial phase")
+
         df_phase = run_query(conn, SQL_ANALYTICS / "trials_by_phase.sql")
-        df_phase = df_phase[df_phase["phase"].notna()].head(10)
+        df_phase["phase"] = df_phase["phase"].apply(normalize_phase)
+        df_phase = df_phase.groupby("phase", as_index=False)["trial_count"].sum()
+
+        # Sort by clinical phase order
+        df_phase["phase_order"] = df_phase["phase"].apply(
+            lambda x: PHASE_ORDER.index(x) if x in PHASE_ORDER else len(PHASE_ORDER)
+        )
+        df_phase = df_phase.sort_values("phase_order")
 
         chart_phase = (
             alt.Chart(df_phase)
             .mark_bar(color=CHART_COLOR)
             .encode(
                 x=alt.X("trial_count:Q", title="Number of Trials"),
-                y=alt.Y("phase:N", sort="-x", title="Phase"),
+                y=alt.Y("phase:N", sort=list(df_phase["phase"]), title="Phase"),
             )
             .properties(height=300)
         )
         st.altair_chart(chart_phase, use_container_width=True)
+        st.caption("*Studies without phase information are grouped as 'Unknown'*")
 
     with col_right:
         st.subheader("Completion Rate by Intervention")
+        st.caption("Percentage of completed studies per intervention type")
+
         df_interventions = run_query(conn, SQL_ANALYTICS / "interventions_completion_rate.sql")
-        df_interventions = df_interventions.head(10)
+        df_interventions = df_interventions.sort_values("completion_rate", ascending=False).head(10)
 
         chart_interventions = (
             alt.Chart(df_interventions)
@@ -108,6 +130,8 @@ def main():
 
     with col_left2:
         st.subheader("Top 10 Conditions")
+        st.caption("Most frequently studied conditions across all trials")
+
         df_conditions = run_query(conn, SQL_ANALYTICS / "top_conditions.sql").head(10)
 
         chart_conditions = (
@@ -123,6 +147,8 @@ def main():
 
     with col_right2:
         st.subheader("Top 10 Countries")
+        st.caption("Countries with the highest number of trial locations")
+
         df_country = run_query(conn, SQL_ANALYTICS / "trials_by_country.sql").head(10)
 
         chart_country = (
@@ -140,12 +166,15 @@ def main():
 
     # --- Row 3: Duration ---
     st.header("Study Duration")
+    st.caption("Average duration in months from start to primary completion date")
 
     df_duration = run_query(conn, SQL_ANALYTICS / "study_duration.sql")
-    df_duration = df_duration[df_duration["avg_duration_months"].notna()].head(10)
+    df_duration = df_duration[df_duration["avg_duration_months"].notna()]
+    df_duration["phase"] = df_duration["phase"].apply(normalize_phase)
+    df_duration = df_duration.head(10)
 
     if not df_duration.empty:
-        df_duration["label"] = df_duration["study_type"] + " / " + df_duration["phase"].fillna("N/A")
+        df_duration["label"] = df_duration["study_type"] + " / " + df_duration["phase"]
 
         chart_duration = (
             alt.Chart(df_duration)
