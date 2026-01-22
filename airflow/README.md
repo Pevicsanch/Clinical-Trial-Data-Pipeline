@@ -76,6 +76,54 @@ airflow dags trigger clinical_trial_pipeline
 # Or use the Airflow UI "Play" button
 ```
 
+## Scheduling Readiness
+
+### Why Manual by Default
+
+The DAG uses `schedule_interval=None` (manual trigger) because:
+- Appropriate scheduling frequency depends on data freshness requirements
+- Avoids unnecessary API calls during development and testing
+- Allows explicit control over when data is refreshed
+
+### Enabling Scheduled Execution
+
+To enable periodic runs, modify the DAG's `schedule_interval`:
+
+```python
+# Daily at midnight
+schedule_interval="@daily"
+
+# Every 6 hours
+schedule_interval="0 */6 * * *"
+
+# Hourly
+schedule_interval="@hourly"
+```
+
+Choose frequency based on:
+- How often ClinicalTrials.gov data is updated
+- Acceptable data staleness for your use case
+- API rate limits and courtesy considerations
+
+### Idempotent Ingestion
+
+The pipeline is safe for repeated execution:
+
+```
+# First run
+Inserted: 50, Skipped: 0
+
+# Second run (same data)
+Inserted: 0, Skipped: 50
+```
+
+This behavior is guaranteed by:
+- **Content hash deduplication**: Each study's JSON is hashed; duplicates are skipped via unique constraint
+- **Append-only raw layer**: No updates or deletes; new versions of studies create new records
+- **Idempotent views**: Staging uses `CREATE OR REPLACE VIEW`
+
+This makes periodic scheduling safe—running the DAG multiple times will not corrupt or duplicate data.
+
 ## Notes
 
 - The DAG reuses existing CLI and SQL files (no logic duplication)

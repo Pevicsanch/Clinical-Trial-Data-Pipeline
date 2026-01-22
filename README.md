@@ -128,6 +128,19 @@ make docker-run   # Run ingestion in Docker
 make clean        # Remove generated files
 ```
 
+### Orchestration (Optional)
+
+Airflow DAG for scheduling and orchestration:
+
+```bash
+# Using Docker
+docker-compose -f docker-compose.airflow.yml up -d
+
+# Access Airflow UI at http://localhost:8080 (admin/admin)
+```
+
+See [airflow/README.md](airflow/README.md) for details.
+
 ### Dashboard
 
 ```bash
@@ -198,6 +211,7 @@ with Database("data/clinical_trials.duckdb") as db:
 - Preserves data history for auditing
 - Allows reprocessing with different transformation logic
 - Deduplication via content hash prevents redundant storage
+- Enables safe repeated execution (idempotent ingestion for scheduled runs)
 
 ### Why SQL views for staging?
 
