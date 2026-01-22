@@ -1,4 +1,4 @@
-.PHONY: install test lint ingest clean docker-build docker-run app
+.PHONY: install test lint ingest clean docker docker-ingest app
 
 install:
 	uv sync
@@ -22,11 +22,11 @@ clean:
 	rm -rf __pycache__
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
-docker-build:
-	docker build -t clinical-pipeline .
+docker:
+	docker-compose up --build
 
-docker-run:
-	docker run --rm -v $(PWD)/data:/app/data clinical-pipeline ingest --max-studies 100
+docker-ingest:
+	docker-compose run --rm pipeline ingest --max-studies 100
 
 app:
 	uv run streamlit run app.py

@@ -105,27 +105,33 @@ uv run pytest tests/ -v
 ### Docker
 
 ```bash
-# Build image
-docker build -t clinical-pipeline .
+# Build and run ingestion (recommended)
+docker-compose up --build
 
-# Run ingestion
-docker run --rm -v $(pwd)/data:/app/data clinical-pipeline ingest --max-studies 500
-
-# Or use docker-compose
-docker-compose up
+# Or run with custom parameters
+docker-compose run --rm pipeline ingest --max-studies 500
 ```
+
+<details>
+<summary>Alternative: direct docker commands</summary>
+
+```bash
+docker build -t clinical-pipeline .
+docker run --rm -v $(pwd)/data:/app/data clinical-pipeline ingest --max-studies 500
+```
+</details>
 
 ### Makefile
 
 ```bash
-make install      # Install dependencies
-make test         # Run tests
-make ingest       # Ingest 100 studies
-make ingest-full  # Ingest 1000 studies
-make app          # Run Streamlit dashboard
-make docker-build # Build Docker image
-make docker-run   # Run ingestion in Docker
-make clean        # Remove generated files
+make install       # Install dependencies
+make test          # Run tests
+make ingest        # Ingest 100 studies
+make ingest-full   # Ingest 1000 studies
+make app           # Run Streamlit dashboard
+make docker        # Build and run via docker-compose
+make docker-ingest # Run ingestion in Docker
+make clean         # Remove generated files
 ```
 
 ### Orchestration (Optional)
