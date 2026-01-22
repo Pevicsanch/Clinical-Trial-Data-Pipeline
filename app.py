@@ -20,7 +20,7 @@ def get_connection():
         st.error(f"Database not found: {DB_PATH}")
         st.info("Run `make ingest` first to load data.")
         st.stop()
-    return duckdb.connect(DB_PATH, read_only=True)
+    return duckdb.connect(DB_PATH)
 
 
 def init_views(conn):
