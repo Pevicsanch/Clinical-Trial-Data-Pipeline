@@ -179,3 +179,58 @@ with Database("data/clinical_trials.duckdb") as db:
 
 - ClinicalTrials.gov blocks `httpx` User-Agent
 - `requests` works out of the box with no configuration
+
+## Production Considerations
+
+### Scalability
+
+To handle 100x more data volume:
+
+- **Partitioning**: Partition raw tables by ingestion date for faster queries
+- **Incremental ingestion**: Use `lastUpdatePostDate` filter to fetch only new/updated studies
+- **Parallel processing**: Batch API requests with async/multiprocessing
+- **Storage**: Export to Parquet files partitioned by year/month for analytical workloads
+- **Infrastructure**: Move from embedded DuckDB to MotherDuck or a distributed query engine
+
+### Data Quality
+
+Additional validation rules for clinical trial data:
+
+- **Schema validation**: Enforce required fields (nct_id, study_type, status)
+- **Referential integrity**: Validate foreign keys between staging tables
+- **Business rules**: Flag studies with enrollment > 100,000 as potential data errors
+- **Date consistency**: Ensure start_date < completion_date
+- **Enum validation**: Validate phase, status against known values
+- **Duplicates**: Alert on studies with same title but different NCT IDs
+
+### Compliance (GxP)
+
+For a GxP-regulated environment:
+
+- **Audit trails**: Log all data modifications with timestamps and user IDs
+- **Data integrity**: Implement ALCOA+ principles (Attributable, Legible, Contemporaneous, Original, Accurate)
+- **Validation**: IQ/OQ/PQ documentation for the pipeline
+- **Change control**: Version control for all SQL transformations with approval workflows
+- **Access control**: Role-based access to raw vs. transformed data
+- **Retention**: Define data retention policies aligned with regulatory requirements
+
+### Monitoring
+
+Production monitoring strategy:
+
+- **Pipeline metrics**: Track ingestion rate, success/failure counts, latency
+- **Data quality metrics**: Monitor null rates, schema drift, row counts per run
+- **Alerts**: Notify on API errors, ingestion failures, unexpected data patterns
+- **Logging**: Centralized logging with correlation IDs for traceability
+- **Dashboards**: Grafana/Datadog for real-time pipeline health visibility
+
+### Security
+
+Security measures for sensitive clinical data:
+
+- **Encryption**: Encrypt data at rest (DuckDB encryption) and in transit (TLS)
+- **Access control**: Implement least-privilege access to database and API credentials
+- **Secrets management**: Use environment variables or vault for API keys
+- **Network**: Restrict outbound traffic to known API endpoints
+- **Anonymization**: Remove or hash PII if processing patient-level data
+- **Audit logging**: Log all data access for security review
