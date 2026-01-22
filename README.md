@@ -165,6 +165,24 @@ Opens at http://localhost:8501 with:
 
 The dashboard is intentionally lightweight and serves as a visual validation of the analytics (Gold) layer, not as a full BI solution.
 
+### Dashboard (Docker)
+
+The Docker image is intentionally focused on the data pipeline.
+
+The Streamlit dashboard is provided as a lightweight validation and exploration UI.
+When needed, it can be executed in Docker via volume mounting, without coupling
+the UI to the core pipeline image.
+
+Example:
+
+```bash
+docker run --rm -p 8501:8501 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/app.py:/app/app.py \
+  --entrypoint uv clinical-pipeline \
+  run streamlit run app.py --server.address 0.0.0.0 --server.headless true
+```
+
 ## Data Models
 
 ### Staging Layer (Silver)
