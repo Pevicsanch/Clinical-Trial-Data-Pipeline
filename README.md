@@ -24,11 +24,12 @@ The pipeline implements an **ELT (Extract-Load-Transform)** pattern with three l
 
 ```
 ├── src/clinical_trial_pipeline/
-│   ├── api/            # API client
+│   ├── extract/        # Data source clients
+│   ├── load/           # Raw data loading
+│   ├── transform/      # Data transformations
 │   ├── storage/        # Database connections
-│   ├── transforms/     # Data transformations
-│   ├── models/         # Data schemas
-│   └── core/           # Configuration
+│   ├── common/         # Config, logging, exceptions
+│   └── domain/         # Domain entities
 ├── sql/
 │   ├── raw/            # Bronze layer DDL
 │   ├── staging/        # Silver transformations
