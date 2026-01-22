@@ -42,6 +42,7 @@ This project implements a production-inspired data pipeline for processing clini
 | Database | DuckDB |
 | HTTP Client | requests |
 | Testing | pytest |
+| Containerization | Docker |
 
 ## Project Structure
 
@@ -89,6 +90,19 @@ uv run python -m clinical_trial_pipeline.cli ingest --db-path data/trials.duckdb
 
 ```bash
 uv run pytest tests/ -v
+```
+
+### Docker
+
+```bash
+# Build image
+docker build -t clinical-pipeline .
+
+# Run ingestion
+docker run --rm -v $(pwd)/data:/app/data clinical-pipeline ingest --max-studies 500
+
+# Or use docker-compose
+docker-compose up
 ```
 
 ## Data Models
