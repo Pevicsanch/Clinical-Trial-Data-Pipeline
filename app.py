@@ -65,10 +65,16 @@ def main():
     completed = conn.execute("SELECT COUNT(*) FROM stg_studies WHERE overall_status = 'COMPLETED'").fetchone()[0]
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Studies", f"{total_studies:,}")
-    col2.metric("Completed", f"{completed:,}")
-    col3.metric("Conditions", f"{total_conditions:,}")
-    col4.metric("Countries", f"{total_countries:,}")
+    with col1:
+        st.metric("Total Studies", f"{total_studies:,}")
+    with col2:
+        st.metric("Completed", f"{completed:,}")
+        if total_studies > 0:
+            st.caption(f"{completed / total_studies * 100:.0f}% of total")
+    with col3:
+        st.metric("Conditions", f"{total_conditions:,}")
+    with col4:
+        st.metric("Countries", f"{total_countries:,}")
 
     st.divider()
 
@@ -100,7 +106,7 @@ def main():
             )
             .properties(height=300)
         )
-        st.altair_chart(chart_phase, use_container_width=True)
+        st.altair_chart(chart_phase, width="stretch")
         st.caption("*Studies without phase information are grouped as 'Unknown'*")
 
     with col_right:
@@ -119,7 +125,7 @@ def main():
             )
             .properties(height=300)
         )
-        st.altair_chart(chart_interventions, use_container_width=True)
+        st.altair_chart(chart_interventions, width="stretch")
 
     st.divider()
 
@@ -139,11 +145,11 @@ def main():
             .mark_bar(color=CHART_COLOR)
             .encode(
                 x=alt.X("trial_count:Q", title="Number of Trials"),
-                y=alt.Y("condition_name:N", sort="-x", title=None),
+                y=alt.Y("condition_name:N", sort="-x", title=None, axis=alt.Axis(labelLimit=300)),
             )
             .properties(height=350)
         )
-        st.altair_chart(chart_conditions, use_container_width=True)
+        st.altair_chart(chart_conditions, width="stretch")
 
     with col_right2:
         st.subheader("Top 10 Countries")
@@ -160,7 +166,7 @@ def main():
             )
             .properties(height=350)
         )
-        st.altair_chart(chart_country, use_container_width=True)
+        st.altair_chart(chart_country, width="stretch")
 
     st.divider()
 
@@ -171,7 +177,7 @@ def main():
     df_duration = run_query(conn, SQL_ANALYTICS / "study_duration.sql")
     df_duration = df_duration[df_duration["avg_duration_months"].notna()]
     df_duration["phase"] = df_duration["phase"].apply(normalize_phase)
-    df_duration = df_duration.head(10)
+    df_duration = df_duration.sort_values("avg_duration_months", ascending=False).head(10)
 
     if not df_duration.empty:
         df_duration["label"] = df_duration["study_type"] + " / " + df_duration["phase"]
@@ -183,9 +189,9 @@ def main():
                 x=alt.X("avg_duration_months:Q", title="Average Duration (months)"),
                 y=alt.Y("label:N", sort="-x", title=None),
             )
-            .properties(height=300)
+            .properties(height=300, padding={"bottom": 20})
         )
-        st.altair_chart(chart_duration, use_container_width=True)
+        st.altair_chart(chart_duration, width="stretch")
     else:
         st.info("No duration data available.")
 
